@@ -8,8 +8,20 @@ class HealthAnalyzer:
     """
     Analyserar data från Hälsostudien.
     """
+
     def __init__(self, df: pd.DataFrame):
         self.df = df
+
+    def check_data_quality(self) -> None:
+        """
+        Kollar saknade värden + duplicerade rader.
+        """
+        print("Saknade värden per kolumn:")
+        print(self.df.isna().sum())
+
+        print("\nFinns duplicerade rader?:")
+        print(self.df.duplicated().any())
+
 
     def basic_info(self, cols: list[str]) -> pd.DataFrame:
         """
@@ -37,7 +49,7 @@ class HealthAnalyzer:
         plt.show()
 
 
-    # använder "fit" som betyder att den här funktionen tränar modellen på datan
+    # använder "fit" som betyder att den här funktionen tränar modellen på datan; analys av relationen mellan blodtryck och ålder:
     def fit_bp_regression(self, features: list[str] | None = None):
         """
           Tränar en linjär regressionsmodell som försöker förutsäga blodtryck från ålder och vikt.
@@ -84,4 +96,22 @@ class HealthAnalyzer:
         plt.ylabel("Blodtryck (mmHg)")
         plt.title("Samband mellan ålder och blodtryck")
         plt.grid(True, linestyle="--", alpha=0.5)
+        plt.show()
+
+    # analys av sjukdomsförekomst per kön i en stapeldiagram:
+    def plot_disease_rate_by_sex(self) -> None:
+        """
+        Ritar upp en stapeldiagram, där man ser andelen personer med sjukdom uppdelar per kön.
+        """
+        rates = self.df.groupby("sex")["disease"].mean() #mean på 0/1-kolumn=andel
+        mean_rate = rates.mean()
+
+        plt.figure(figsize=(8, 5))
+        rates.plot(kind="bar", color=["skyblue", "lightcoral"], edgecolor="black")
+        plt.axhline(mean_rate, color="gray", linestyle="--", label= "Genomsnittet av båda grupperna", alpha=0.6)
+        plt.ylabel("Andel med sjukdom")
+        plt.ylim(0, 1)
+        plt.title("Sjukdomsförekomst per kön")
+        plt.grid(axis="y", linestyle="--", alpha=0.5)
+        plt.legend()
         plt.show()
