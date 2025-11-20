@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from sklearn.decomposition import PCA
 
 
 class HealthAnalyzer:
@@ -25,7 +26,7 @@ class HealthAnalyzer:
 
     def basic_info(self, cols: list[str]) -> pd.DataFrame:
         """
-        Beräknar grundnstatistik (medel, median, min, max) för valda kolumner.
+        Beräknar grundstatistik (medel, median, min, max) för valda kolumner.
         """
         return self.df[cols].agg(["mean", "median", "min", "max"])
     
@@ -46,6 +47,26 @@ class HealthAnalyzer:
         plt.title("Fördelning av systoliskt blodtryck")
         plt.legend()
         plt.grid(True, linestyle="--", alpha=0.7)
+        plt.show()
+
+
+    # Vill se vilka variabler som påverkar varandra:
+    def show_correlations(self, cols=None):
+        """
+        Visar en korrelationsmatris för att se hur variabler hänger ihop. Perfekt innan regression/PCA modellerna.
+        """
+        if cols is None:
+            cols = ["age", "weight", "height", "systolic_bp", "cholesterol"]
+        
+        corr = self.df[cols].corr()
+        print(corr)
+
+        plt.figure(figsize=(8, 5))
+        plt.imshow(corr, cmap="coolwarm", interpolation="nearest")
+        plt.colorbar(label="Korrelationsvärde")
+        plt.title("Korrelationsmatris")
+        plt.xticks(range(len(cols)), cols, rotation=45)
+        plt.yticks(range(len(cols)), cols)
         plt.show()
 
 
@@ -115,3 +136,35 @@ class HealthAnalyzer:
         plt.grid(axis="y", linestyle="--", alpha=0.5)
         plt.legend()
         plt.show()
+
+
+    # försöker hitta mönster i datan:
+    def pca_analysis(self, features=None, n_components=2):
+        """
+        Använder PCA på vålda kolumner för att hitta mönster i datan.
+        """
+        if features is None:
+            features = ["age", "weight", "height", "cholesterol", "systolic_bp"]
+            X = self.df[features].values
+
+            pca = PCA(n_components=n_components)
+            transformed = pca.fit_transform(X)
+
+        return transformed, pca.explained_variance_ratio_
+    
+
+    # Ritar upp en graf som visualiserar PCA metoden lite bättre:
+    def plot_pca(self, features=None):
+        """
+        Ritar en scatterplot med de två första PCA-komponenterna. Lättare att se visuellt ett mönster eller grupper i datan.
+        """
+        transformed, variance = self.pca_analysis(features)
+
+        plt.figure(figsize=(8, 6))
+        plt.scatter(transformed[:,0], transformed[:,1], alpha=0.6, edgecolor="black")
+        plt.xlabel(f"PC1 ({variance[0]*100: .1f}%)")
+        plt.ylabel(f"PC2 ({variance[1]*100: .1f}%)")
+        plt.title("PCA - Mönster i hälsodatan")
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.show()
+
